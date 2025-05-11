@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "vinyl-bin-scanner",
-    "slug": "vinyl-bin-scanner",
+    "name": "Discogs Scanner",
+    "slug": "discogs-scanner",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "org.squiggle.vinyl-bin-scanner",
+      "bundleIdentifier": "org.squiggle.discogs-scanner",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }

@@ -1,6 +1,7 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Vibration } from 'react-native';
 import {
   useEffect,
   useState,
@@ -29,6 +30,7 @@ export default function App() {
   const [folders, setFolders] = useState([]);
   const [selectedFolderId, setSelectedFolderId] = useState(null);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [hasScanned, setHasScanned] = useState(false);
   const scannedRef = useRef(false);
 
   useEffect(() => {
@@ -63,6 +65,8 @@ export default function App() {
     if (scannedRef.current || !token || !username) return;
     scannedRef.current = true;
     setScreen('home');
+    
+    Vibration.vibrate(10)
 
     const [releaseId, instanceId] = data.trim().split('.');
     if (!/^\d+$/.test(releaseId) || !/^\d+$/.test(instanceId)) {
@@ -101,8 +105,10 @@ export default function App() {
           release_id: match.basic_information.id,
           instance_id: match.instance_id,
         });
+        setHasScanned(true);
       } else {
         setResult(false);
+        setHasScanned(true);
       }
     } catch (err) {
       console.error('API error:', err);
@@ -148,12 +154,15 @@ export default function App() {
   if (!permission) return <View />;
   if (!permission.granted) {
     return (
+
+      <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.centered}>
         <Text style={styles.message}>Camera access is required to scan items.</Text>
         <TouchableOpacity style={styles.primaryButton} onPress={requestPermission}>
           <Text style={styles.buttonText}>Grant Camera Permission</Text>
         </TouchableOpacity>
       </View>
+      </ScrollView>
     );
   }
 
@@ -176,7 +185,9 @@ export default function App() {
     <ScrollView contentContainerStyle={styles.container}>
       {!token || !username ? (
         <>
-          <Text style={styles.header}>Enter Discogs Personal Access Token</Text>
+          <Text style={styles.header}>Discogs Personal Access Token</Text>
+          <Text  style={styles.message}>We need this for the app to access your collection.</Text>
+          <Text  style={styles.message}>You'll need to generate a new token, and then paste the letters/numbers into the box below!</Text>
           <Text
             style={styles.link}
             onPress={() => Linking.openURL('https://www.discogs.com/settings/developers')}
@@ -210,7 +221,7 @@ export default function App() {
             <Text style={styles.buttonText}>Scan item</Text>
           </TouchableOpacity>
 
-          {!result && (
+          {hasScanned && !result && (
             <View style={styles.result}>
               <Text style={styles.message}>Not found in collection!</Text>
             </View>
@@ -290,7 +301,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    marginBottom: 20,
+    marginBottom: 30,
+    marginTop: 30,
   },
   primaryButton: {
     backgroundColor: '#6200ee',
