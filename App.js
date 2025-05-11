@@ -291,6 +291,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: 'stretch',
     padding: 0,
+    backgroundColor: 'white',
   },
   message: {
     textAlign: 'center',
