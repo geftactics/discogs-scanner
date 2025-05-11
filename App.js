@@ -224,7 +224,6 @@ export default function App() {
           {isLoading && (
             <View style={styles.result}>
               <ActivityIndicator size="large" color="#333" />
-              {/* <Text style={styles.message}>Looking for your record…</Text> */}
             </View>
           )}
 
@@ -343,6 +342,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 10,
+    minHeight: 300,
+    justifyContent: 'center'
   },
   resultArtist: {
     fontSize: 18,
