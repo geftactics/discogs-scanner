@@ -1,12 +1,8 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Vibration } from 'react-native';
-import {
-  useEffect,
-  useState,
-  useRef
-} from 'react';
+import { Vibration, ActivityIndicator } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Button,
@@ -17,7 +13,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 
 export default function App() {
@@ -31,6 +27,7 @@ export default function App() {
   const [selectedFolderId, setSelectedFolderId] = useState(null);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [hasScanned, setHasScanned] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const scannedRef = useRef(false);
 
   useEffect(() => {
@@ -65,13 +62,14 @@ export default function App() {
     if (scannedRef.current || !token || !username) return;
     scannedRef.current = true;
     setScreen('home');
-    
-    Vibration.vibrate(10)
+    setIsLoading(true);
+    Vibration.vibrate(10);
 
     const [releaseId, instanceId] = data.trim().split('.');
     if (!/^\d+$/.test(releaseId) || !/^\d+$/.test(instanceId)) {
       Alert.alert('Invalid QR Code', 'Expected format: release_id.instance_id');
       scannedRef.current = false;
+      setIsLoading(false);
       return;
     }
 
@@ -82,8 +80,9 @@ export default function App() {
       const releaseData = await releaseRes.json();
 
       const match = releaseData.releases?.find(
-        r => r.basic_information.id.toString() === releaseId &&
-             r.instance_id.toString() === instanceId
+        r =>
+          r.basic_information.id.toString() === releaseId &&
+          r.instance_id.toString() === instanceId
       );
 
       if (match) {
@@ -115,6 +114,7 @@ export default function App() {
       Alert.alert('Error', 'Failed to query Discogs collection');
     } finally {
       scannedRef.current = false;
+      setIsLoading(false);
     }
   };
 
@@ -154,14 +154,13 @@ export default function App() {
   if (!permission) return <View />;
   if (!permission.granted) {
     return (
-
       <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.centered}>
-        <Text style={styles.message}>Camera access is required to scan items.</Text>
-        <TouchableOpacity style={styles.primaryButton} onPress={requestPermission}>
-          <Text style={styles.buttonText}>Grant Camera Permission</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.centered}>
+          <Text style={styles.message}>Camera access is required to scan items.</Text>
+          <TouchableOpacity style={styles.primaryButton} onPress={requestPermission}>
+            <Text style={styles.buttonText}>Grant Camera Permission</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     );
   }
@@ -186,8 +185,8 @@ export default function App() {
       {!token || !username ? (
         <>
           <Text style={styles.header}>Discogs Personal Access Token</Text>
-          <Text  style={styles.message}>We need this for the app to access your collection.</Text>
-          <Text  style={styles.message}>You'll need to generate a new token, and then paste the letters/numbers into the box below!</Text>
+          <Text style={styles.message}>We need this for the app to access your collection.</Text>
+          <Text style={styles.message}>You'll need to generate a new token, and then paste the letters/numbers into the box below!</Text>
           <Text
             style={styles.link}
             onPress={() => Linking.openURL('https://www.discogs.com/settings/developers')}
@@ -214,6 +213,7 @@ export default function App() {
               setResult(null);
               setFolders([]);
               setSelectedFolderId(null);
+              setHasScanned(false);
               setScreen('camera');
             }}
           >
@@ -221,13 +221,20 @@ export default function App() {
             <Text style={styles.buttonText}>Scan item</Text>
           </TouchableOpacity>
 
-          {hasScanned && !result && (
+          {isLoading && (
+            <View style={styles.result}>
+              <ActivityIndicator size="large" color="#333" />
+              {/* <Text style={styles.message}>Looking for your record…</Text> */}
+            </View>
+          )}
+
+          {!isLoading && hasScanned && !result && (
             <View style={styles.result}>
               <Text style={styles.message}>Not found in collection!</Text>
             </View>
           )}
 
-          {result && (
+          {!isLoading && result && (
             <View style={styles.result}>
               <Text style={styles.resultTitle}>{result.title}</Text>
               <Text style={styles.resultArtist}>{result.artist}</Text>
@@ -263,6 +270,7 @@ export default function App() {
     </ScrollView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
