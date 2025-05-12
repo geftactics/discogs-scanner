@@ -25,6 +25,16 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "build": {
+        "output": "web-build"
+      },
+      "bundler": "metro",
+      "favicon": "./assets/icon.png"
+    },
+    "experiments": {
+        "baseUrl": "/discogs-scanner/"
     }
   }
 }
