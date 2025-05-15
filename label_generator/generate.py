@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -8,7 +9,7 @@ import qrcode
 from io import BytesIO
 
 # === CONFIGURE ===
-DISCOGS_TOKEN = 'WQkuKPGBOMwsbyUMtOEyaWIjSLGzNijBZqpHNtCa'
+DISCOGS_TOKEN = ''
 USER_AGENT = 'VinylLabelGenerator/1.0'
 USERNAME = 'geftactics'  # <-- Replace with your Discogs username
 
@@ -18,11 +19,11 @@ LABELS_PER_COLUMN = 7
 # Margins (in mm)
 MARGIN_TOP = 7 * mm
 MARGIN_BOTTOM = 10 * mm
-MARGIN_LEFT = 2 * mm
+MARGIN_LEFT = 4 * mm
 MARGIN_RIGHT = 10 * mm
 
 # Spacing between labels (in mm)
-H_SPACE = 5 * mm  # Horizontal space between labels
+H_SPACE = 6 * mm  # Horizontal space between labels
 V_SPACE = 1 * mm  # Vertical space between labels
 
 # Calculated dimensions
@@ -63,7 +64,7 @@ def fetch_collection():
             'token': DISCOGS_TOKEN,
             'per_page': 100,
             'page': page,
-            'sort': 'artist'
+            'sort': 'added'
         }
 
         response = requests.get(url, headers={'User-Agent': USER_AGENT}, params=params)
@@ -93,7 +94,8 @@ def generate_pdf(releases, filename='labels.pdf'):
         instance_id = release['instance_id']
         release_id = release['id']
         title = release['basic_information']['title']
-        artist = ', '.join([a['name'] for a in release['basic_information']['artists']])
+        artist = ', '.join([re.sub(r'\s*\(\d+\)', '', a['name']) for a in release['basic_information']['artists']])
+        label = ', '.join([l['name'] for l in release['basic_information'].get('labels', [])])
         catno = release['basic_information'].get('labels', [{}])[0].get('catno', '')
 
         # QR content and image
@@ -125,8 +127,9 @@ def generate_pdf(releases, filename='labels.pdf'):
         # Draw artist, cat#, release ID
         c.setFont("Helvetica", 6)
         c.drawString(text_x, text_top_y - (len(wrapped_title) * 8) - 0, artist)
-        c.drawString(text_x, text_top_y - (len(wrapped_title) * 8) - 17, f'{catno}')
-        c.drawString(text_x, text_top_y - (len(wrapped_title) * 8) - 27, f'{release_id}.{instance_id}')
+        c.drawString(text_x, text_top_y - (len(wrapped_title) * 8) - 17, f'{label}')
+        c.drawString(text_x, text_top_y - (len(wrapped_title) * 8) - 27, f'{catno}')
+        c.drawString(text_x, text_top_y - (len(wrapped_title) * 8) - 37, f'{release_id}.{instance_id}')
         c.setFont("Helvetica", 7)
         c.drawString(text_x - 60, text_top_y - (len(wrapped_title) * 8) - 57, f'Owner: Geoff@squiggle org / 07990 511283')
 
