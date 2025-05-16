@@ -1,90 +1,87 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Discogs Exporter</title>
+  <meta charset="UTF-8" />
+  <title>Discogs Collection CSV Export</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; max-width: 600px; margin: auto; }
+    label, input, button { display: block; margin-top: 1em; width: 100%; }
+    pre { background: #eee; padding: 1em; overflow: auto; }
+  </style>
 </head>
 <body>
-  <h1>Discogs Collection Exporter</h1>
-  <label>Personal Access Token: <input type="text" id="token" /></label>
-  <button onclick="start()">Export to CSV</button>
+  <h1>Discogs Collection CSV Export</h1>
+  <p>Paste your Discogs Personal Access Token below to export your collection as a CSV.
+    This will include a field of 'qr_data', which can be used to print QR code labels.
+  </p>
+
+  <label for="token">Discogs Token:</label>
+  <input type="text" id="token" placeholder="Paste your token here" />
+
+  <button id="go">Export to CSV</button>
+
+  <pre id="output"></pre>
 
   <script>
-    async function start() {
+    document.getElementById('go').addEventListener('click', async () => {
       const token = document.getElementById('token').value.trim();
-      if (!token) {
-        alert("Please enter your Discogs token");
-        return;
-      }
+      const output = document.getElementById('output');
+      if (!token) return alert('Please enter your Discogs token.');
+
+      output.textContent = 'Fetching username...\n';
 
       try {
-        console.log("🔐 Fetching user info...");
-        const userRes = await fetch('https://api.discogs.com/oauth/identity', {
+        const identityRes = await fetch('https://api.discogs.com/oauth/identity', {
           headers: { 'Authorization': `Discogs token=${token}` }
         });
+        const identity = await identityRes.json();
+        const username = identity.username;
+        output.textContent += `Found username: ${username}\nFetching collection...\n`;
 
-        if (!userRes.ok) throw new Error('Failed to fetch user info');
-        const user = await userRes.json();
-        console.log("👤 Username:", user.username);
+        let page = 1, per_page = 100;
+        let allItems = [], more = true;
 
-        let items = [];
-        let page = 1;
-        let pages = 1;
-
-        console.log("📦 Fetching collection...");
-        do {
-          const url = `https://api.discogs.com/users/${user.username}/collection/folders/0/releases?page=${page}&per_page=100`;
-          console.log(`📄 Fetching page ${page} of ${pages}`);
+        while (more) {
+          const url = `https://api.discogs.com/users/${username}/collection/folders/0/releases?page=${page}&per_page=${per_page}`;
           const res = await fetch(url, {
             headers: { 'Authorization': `Discogs token=${token}` }
           });
-
-          if (!res.ok) throw new Error(`Failed to fetch collection page ${page}`);
-          const json = await res.json();
-
-          pages = json.pagination.pages;
-          items = items.concat(json.releases);
+          const data = await res.json();
+          allItems.push(...data.releases);
+          output.textContent += `Fetching page ` + page.toString() + `...\n`;
+          more = data.pagination.page < data.pagination.pages;
+          //console.log(allItems)
           page++;
+        }
 
-        } while (page <= pages);
+        output.textContent += `Fetched ${allItems.length} items!\nGenerating CSV...`;
 
-        console.log(`✅ Retrieved ${items.length} items`);
+        const csvHeader = ['qr_data', 'release_id', 'instance_id', 'artist', 'catalog_number', 'record_label'];
+        const csvRows = [csvHeader.join(',')];
 
-        // CSV headers
-        const rows = [['release_id', 'instance_id', 'artist', 'catalog_number', 'label']];
-
-        items.forEach((item, idx) => {
-          if (!item || !item.release) {
-            console.warn(`⚠️ Skipping item ${idx} - missing release`, item);
-            return;
-          }
-
-          const releaseId = item.release.id || '';
-          const instanceId = item.instance_id || '';
-          const artists = item.basic_information?.artists?.map(a => a.name).join(' / ') || '';
-          const catno = item.basic_information?.labels?.map(l => l.catno).join(' / ') || '';
-          const labels = item.basic_information?.labels?.map(l => l.name).join(' / ') || '';
-
-          console.log(`📀 Item ${idx + 1}: ${artists} [${catno}] on ${labels}`);
-
-          rows.push([releaseId, instanceId, artists, catno, labels]);
+        allItems.forEach(item => {
+          const id = item.basic_information.id;
+          const instance = item.instance_id;
+          const artists = item.basic_information?.artists?.map(a => a.name.replace(/\s\(\d+\)$/, '').replace(/^"+|"+$/g, '')).join(' / ') || '';
+          const catnos = item.basic_information.labels.map(l => `"${l.catno}"`).join('; ');
+          const labels = item.basic_information.labels.map(l => `"${l.name}"`).join('; ');
+          const qr_data = id + '.' + instance;
+          csvRows.push([qr_data, instance, artists, catnos, labels].join(','));
         });
 
-        // Convert to CSV
-        const csv = rows.map(r => r.map(field => `"${field.replace(/"/g, '""')}"`).join(',')).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `discogs-collection-${user.username}.csv`;
-        link.click();
+        const csvBlob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+        const url = URL.createObjectURL(csvBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `discogs_collection_${username}.csv`;
+        a.click();
 
-        console.log("✅ CSV downloaded!");
+        output.textContent += '\nCSV download started...';
 
-      } catch (e) {
-        console.error("❌ Error:", e);
-        alert(`Error: ${e.message}`);
+      } catch (err) {
+        output.textContent += 'Error: ' + err.message;
       }
-    }
+    });
   </script>
 </body>
 </html>
