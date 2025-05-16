@@ -50,23 +50,24 @@
           allItems.push(...data.releases);
           output.textContent += `Fetching page ` + page.toString() + `...\n`;
           more = data.pagination.page < data.pagination.pages;
-          //console.log(allItems)
+          console.log(allItems)
           page++;
         }
 
         output.textContent += `Fetched ${allItems.length} items!\nGenerating CSV...`;
 
-        const csvHeader = ['qr_data', 'release_id', 'instance_id', 'artist', 'catalog_number', 'record_label'];
+        const csvHeader = ['qr_data', 'release_id', 'instance_id', 'artist', 'title', 'catalog_number', 'record_label'];
         const csvRows = [csvHeader.join(',')];
 
         allItems.forEach(item => {
           const id = item.basic_information.id;
           const instance = item.instance_id;
+          const title = item.basic_information.title;
           const artists = item.basic_information?.artists?.map(a => a.name.replace(/\s\(\d+\)$/, '').replace(/^"+|"+$/g, '')).join(' / ') || '';
           const catnos = item.basic_information.labels.map(l => `"${l.catno}"`).join('; ');
           const labels = item.basic_information.labels.map(l => `"${l.name}"`).join('; ');
           const qr_data = id + '.' + instance;
-          csvRows.push([qr_data, instance, artists, catnos, labels].join(','));
+          csvRows.push([qr_data, id, instance, artists, title, catnos, labels].join(','));
         });
 
         const csvBlob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
