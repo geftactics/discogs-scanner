@@ -1,3 +1,6 @@
+---
+title: Privacy Policy
+---
 # Privacy Policy
 
 Discogs Scanner does not collect, store, or transmit any personal information.

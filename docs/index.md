@@ -1,0 +1,4 @@
+---
+title: Discogs Scanner
+---
+Instructions on getting the app working with QR codes will appear here shortly.
