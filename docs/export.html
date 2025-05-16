@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Discogs Collection CSV Export</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; max-width: 600px; margin: auto; }
+    label, input, button { display: block; margin-top: 1em; width: 100%; }
+    pre { background: #eee; padding: 1em; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>Discogs Collection CSV Export</h1>
+  <p>Paste your Discogs Personal Access Token below to export your collection as a CSV.</p>
+
+  <label for="token">Discogs Token:</label>
+  <input type="text" id="token" placeholder="Paste your token here" />
+
+  <button id="go">Export to CSV</button>
+
+  <pre id="output"></pre>
+
+  <script>
+    document.getElementById('go').addEventListener('click', async () => {
+      const token = document.getElementById('token').value.trim();
+      const output = document.getElementById('output');
+      if (!token) return alert('Please enter your Discogs token.');
+
+      output.textContent = 'Fetching username...';
+
+      try {
+        const identityRes = await fetch('https://api.discogs.com/oauth/identity', {
+          headers: { 'Authorization': `Discogs token=${token}` }
+        });
+        const identity = await identityRes.json();
+        const username = identity.username;
+        output.textContent = `Found username: ${username}\nFetching collection...`;
+
+        let page = 1, per_page = 100;
+        let allItems = [], more = true;
+
+        while (more) {
+          const url = `https://api.discogs.com/users/${username}/collection/folders/0/releases?page=${page}&per_page=${per_page}`;
+          const res = await fetch(url, {
+            headers: { 'Authorization': `Discogs token=${token}` }
+          });
+          const data = await res.json();
+          allItems.push(...data.releases);
+          more = data.pagination.page < data.pagination.pages;
+          page++;
+        }
+
+        output.textContent += `\nFetched ${allItems.length} items.\nGenerating CSV...`;
+
+        const csvHeader = ['release_id', 'instance_id', 'artist', 'catalog_number', 'record_label'];
+        const csvRows = [csvHeader.join(',')];
+
+        allItems.forEach(item => {
+          const id = item.release.id;
+          const instance = item.instance_id;
+          const artists = item.basic_information.artists.map(a => `"${a.name}"`).join('; ');
+          const catnos = item.basic_information.labels.map(l => `"${l.catno}"`).join('; ');
+          const labels = item.basic_information.labels.map(l => `"${l.name}"`).join('; ');
+          csvRows.push([id, instance, artists, catnos, labels].join(','));
+        });
+
+        const csvBlob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+        const url = URL.createObjectURL(csvBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `discogs_collection_${username}.csv`;
+        a.click();
+
+        output.textContent += '\nDone! CSV download started.';
+
+      } catch (err) {
+        output.textContent = 'Error: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
