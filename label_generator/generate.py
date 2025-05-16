@@ -1,3 +1,4 @@
+import argparse
 import os
 import re
 import requests
@@ -9,9 +10,14 @@ import qrcode
 from io import BytesIO
 
 # === CONFIGURE ===
-DISCOGS_TOKEN = ''
+parser = argparse.ArgumentParser(description='Discogs app config')
+parser.add_argument('--token', required=True, help='Discogs personal access token')
+parser.add_argument('--username', required=True, help='Discogs username')
+args = parser.parse_args()
+DISCOGS_TOKEN = args.token
+USERNAME = args.username
 USER_AGENT = 'VinylLabelGenerator/1.0'
-USERNAME = 'geftactics'  # <-- Replace with your Discogs username
+
 
 LABELS_PER_ROW = 3
 LABELS_PER_COLUMN = 7

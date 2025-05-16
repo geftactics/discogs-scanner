@@ -14,8 +14,9 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "org.squiggle.discogs-scanner",
+      "bundleIdentifier": "org.squiggle.discogsscanner",
       "infoPlist": {
+        "NSCameraUsageDescription": "We need access to your camera so that we can scan QR codes to search for items in your Discogc collection",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -34,7 +35,12 @@
       "favicon": "./assets/icon.png"
     },
     "experiments": {
-        "baseUrl": "/discogs-scanner/"
+      "baseUrl": "/discogs-scanner/"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "bed19b5e-8ef3-46cf-9e83-e57974390823"
+      }
     }
   }
 }
