@@ -35,4 +35,4 @@ yarn-error.*
 *.tsbuildinfo
 
 # Specific
-label_generator/labels.pdf
+label_generator/*.pdf
