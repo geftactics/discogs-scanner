@@ -1,8 +1,6 @@
 ---
 title: Privacy Policy
 ---
-# Privacy Policy
-
 Discogs Scanner does not collect, store, or transmit any personal information.
 
 The app communicates with the Discogs API using your account credentials. These credentials are stored securely on your device and are never shared with us or any third parties.
