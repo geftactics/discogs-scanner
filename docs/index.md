@@ -9,6 +9,6 @@ Features:
 - Works seamlessly with your Discogs collection
 
 Getting Started:
-- You'll need a personal access token to link to your Discogs account
+- You'll need a personal access token to link to your Discogs account (https://www.discogs.com/settings/developers)
 - Create your physical shelfs/bins as folders on Discogs
 - Attach a QR code containing release_id.instance_id to each item you wish to track (We'll add a tool soon on this page!)
