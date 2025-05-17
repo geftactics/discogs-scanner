@@ -16,7 +16,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "org.squiggle.discogsscanner",
       "infoPlist": {
-        "NSCameraUsageDescription": "We need access to your camera so that we can scan QR codes to search for items in your Discogc collection",
+        "NSCameraUsageDescription": "We need access to your camera so that we can scan QR codes to search for items in your Discogs collection",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
