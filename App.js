@@ -158,7 +158,7 @@ export default function App() {
         <View style={styles.centered}>
           <Text style={styles.message}>Camera access is required to scan items.</Text>
           <TouchableOpacity style={styles.primaryButton} onPress={requestPermission}>
-            <Text style={styles.buttonText}>Grant Camera Permission</Text>
+            <Text style={styles.buttonText}>Continue</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
